@@ -1,0 +1,17 @@
+/* Basic CSS styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
+}
+
+#div1 {
+    border: 2px solid #333;
+    display: inline-block;
+    margin: 10px;
+}
+
+canvas {
+    display: block;
+}
