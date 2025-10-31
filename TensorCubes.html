@@ -20,6 +20,8 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin: 20px 0;
             text-align: center;
+            width: 650px;
+            min-height: 800px;
         }
         h1 {
             color: #333;
@@ -58,7 +60,7 @@
             height: 400px !important;
         }
         #status {
-            background: #ffffff;
+            background: #f8f9fa;
             padding: 15px;
             border-radius: 5px;
             margin: 10px 0;
@@ -68,8 +70,10 @@
             font-weight: bold;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-align: left;
-            min-height: 30px;
+            height: 60px;
             overflow: hidden;
+            display: flex;
+            align-items: center;
         }
         #status-container {
             margin: 20px 0;
@@ -77,7 +81,7 @@
             text-align: left;
             display: inline-block;
             width: 100%;
-            min-height: 60px;
+            height: 80px;
         }
     </style>
 </head>
@@ -98,11 +102,11 @@
             • Purple cube learns to follow the red cube<br>
             • Blue cube learns to follow the purple cube<br>
             • Neural networks use 6 inputs (position + velocity)<br>
-            • Output: 6 discrete actions (Up, Down, Left, Right, Forward, Back)<br>
+            • Output: (Up, Down, Left, Right, Forward, Back)<br>
             • Training uses a simple behavior function as ground truth<br><br>
             <strong>Phases:</strong><br>
             Phase 1: 10s of direct following<br>
-            Phase 2: Neural network learning begins
+            Phase 2: Neural network learning
         </div>
     </div>
 
