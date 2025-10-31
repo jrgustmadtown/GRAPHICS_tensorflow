@@ -456,10 +456,5 @@ async function trainCubeNetwork(cubeIndex) {
   }
 }
 
-// Empty training function for potential future use
-async function trainCorrectionNetwork() {
-  // Placeholder function for additional training functionality
-}
-
 // Start the animation
 animate();
