@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50×50 Canvas 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #333;
+            background: white;
+            display: block;
+            margin: 10px auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .coordinates {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>50×50 Canvas 测试</h1>
+        
+        <canvas id="testCanvas" width="800" height="800"></canvas>
+        
+        <div class="info">
+            <h3>画布信息</h3>
+            <p><strong>尺寸：</strong> 800 × 800 像素</p>
+            <p><strong>坐标范围：</strong> 0 到 800</p>
+            <p><strong>坐标原点：</strong> 左上角 (0,0)</p>
+            <p><strong>右下角：</strong> (800,800)</p>
+        </div>
+        
+        <div class="coordinates">
+            <strong>坐标轴标注：</strong><br>
+            X轴：0 → 800 (从左到右)<br>
+            Y轴：0 → 800 (从上到下)<br>
+            粗网格间隔：50像素<br>
+            细网格间隔：10像素 (五等分)<br>
+            原点：(0,0) 位于左上角
+        </div>
+        
+        <div id="drawingInfo"></div>
+    </div>
+
+    <script>
+        // 获取画布和上下文
+        const canvas = document.getElementById('testCanvas');
+        const context = canvas.getContext('2d');
+        
+        // 绘制带坐标轴的画布
+        function drawCanvasWithAxes() {
+            // 清空画布
+            context.clearRect(0, 0, 800, 800);
+            
+            // 绘制背景色
+            context.fillStyle = '#f9f9f9';
+            context.fillRect(0, 0, 800, 800);
+            
+            // 绘制网格线
+            // 细网格线 (每10像素一条，从0到800)
+            context.strokeStyle = '#e8e8e8';  // 浅灰色，更容易看到
+            context.lineWidth = 0.5;  // 更细的线条
+            
+            // 垂直细网格线
+            for (let x = 0; x <= 800; x += 10) {
+                context.beginPath();
+                context.moveTo(x, 0);
+                context.lineTo(x, 800);
+                context.stroke();
+            }
+            
+            // 水平细网格线
+            for (let y = 0; y <= 800; y += 10) {
+                context.beginPath();
+                context.moveTo(0, y);
+                context.lineTo(800, y);
+                context.stroke();
+            }
+            
+            // 粗网格线 (每50像素一条，从0到800)
+            context.strokeStyle = '#d0d0d0';  // 稍深的灰色
+            context.lineWidth = 1;
+            
+            // 垂直粗网格线
+            for (let x = 0; x <= 800; x += 50) {
+                context.beginPath();
+                context.moveTo(x, 0);
+                context.lineTo(x, 800);
+                context.stroke();
+            }
+            
+            // 水平粗网格线
+            for (let y = 0; y <= 800; y += 50) {
+                context.beginPath();
+                context.moveTo(0, y);
+                context.lineTo(800, y);
+                context.stroke();
+            }
+            
+            // 绘制坐标轴
+            context.strokeStyle = '#333';
+            context.lineWidth = 2;
+            
+            // X轴 (底部)
+            context.beginPath();
+            context.moveTo(0, 0);
+            context.lineTo(800, 0);
+            context.stroke();
+            
+            // Y轴 (左侧)
+            context.beginPath();
+            context.moveTo(0, 0);
+            context.lineTo(0, 800);
+            context.stroke();
+            
+            // 绘制原点(0,0)的标记
+            context.fillStyle = '#ff0000';
+            context.beginPath();
+            context.arc(0, 0, 4, 0, 2 * Math.PI);
+            context.fill();
+            
+            // 绘制坐标轴标记点
+            context.fillStyle = '#333';
+            context.font = '12px Arial';
+            context.textAlign = 'center';
+            
+            // X轴标记 (0, 100, 200, ..., 800)
+            for (let x = 0; x <= 800; x += 100) {
+                context.fillText(x.toString(), x, 15);
+            }
+            
+            // Y轴标记 (0, 100, 200, ..., 800)
+            context.textAlign = 'right';
+            for (let y = 0; y <= 800; y += 100) {
+                if (y !== 0) { // 跳过原点，避免重叠
+                    context.fillText(y.toString(), 20, y + 4);
+                }
+            }
+            
+            // 原点标签
+            context.fillStyle = '#333';
+            context.font = '12px Arial';
+            context.textAlign = 'left';
+            context.fillText('(0,0)', 5, 15);
+            
+            // 调用空的随机绘制函数
+            draw_random();
+        }
+        
+        // 空的随机绘制函数
+        function draw_random() {
+            // 二次贝塞尔曲线的参数
+            const P0 = {x: 200, y: 250};  // 起点
+            const P1 = {x: 50, y: 400};   // 控制点
+            const P2 = {x: 300, y: 450};  // 终点
+            
+            // 绘制黑色二次贝塞尔曲线
+            context.strokeStyle = "black";
+            context.lineWidth = 3;
+            context.beginPath();
+            context.moveTo(P0.x, P0.y);
+            context.quadraticCurveTo(P1.x, P1.y, P2.x, P2.y);
+            context.stroke();
+            
+            // 将二次贝塞尔曲线转换为三次贝塞尔曲线
+            // 公式：CP1 = P0 + 2/3 * (P1 - P0)
+            //       CP2 = P2 + 2/3 * (P1 - P2)
+            const CP1 = {
+                x: P0.x + (2/3) * (P1.x - P0.x),
+                y: P0.y + (2/3) * (P1.y - P0.y)
+            };
+            const CP2 = {
+                x: P2.x + (2/3) * (P1.x - P2.x),
+                y: P2.y + (2/3) * (P1.y - P2.y)
+            };
+            
+            // 绘制等价的红色三次贝塞尔曲线（稍微偏移一点以便看出重叠）
+            context.strokeStyle = "red";
+            context.lineWidth = 2;
+            context.setLineDash([5, 5]); // 虚线
+            context.beginPath();
+            context.moveTo(P0.x, P0.y);
+            context.bezierCurveTo(CP1.x, CP1.y, CP2.x, CP2.y, P2.x, P2.y);
+            context.stroke();
+            context.setLineDash([]); // 恢复实线
+            
+            // 绘制控制点
+            context.fillStyle = "blue";
+            
+            // 起点
+            context.beginPath();
+            context.arc(P0.x, P0.y, 5, 0, 2 * Math.PI);
+            context.fill();
+            
+            // 二次贝塞尔的控制点
+            context.fillStyle = "green";
+            context.beginPath();
+            context.arc(P1.x, P1.y, 5, 0, 2 * Math.PI);
+            context.fill();
+            
+            // 终点
+            context.fillStyle = "blue";
+            context.beginPath();
+            context.arc(P2.x, P2.y, 5, 0, 2 * Math.PI);
+            context.fill();
+            
+            // 三次贝塞尔的控制点
+            context.fillStyle = "orange";
+            context.beginPath();
+            context.arc(CP1.x, CP1.y, 4, 0, 2 * Math.PI);
+            context.fill();
+            context.beginPath();
+            context.arc(CP2.x, CP2.y, 4, 0, 2 * Math.PI);
+            context.fill();
+            
+            // 添加标签
+            context.fillStyle = "black";
+            context.font = "12px Arial";
+            context.fillText(`P0 (${P0.x}, ${P0.y})`, P0.x + 10, P0.y - 10);
+            context.fillText(`P1 (${P1.x}, ${P1.y})`, P1.x + 10, P1.y - 10);
+            context.fillText(`P2 (${P2.x}, ${P2.y})`, P2.x + 10, P2.y + 20);
+            context.fillText(`CP1 (${CP1.x.toFixed(1)}, ${CP1.y.toFixed(1)})`, CP1.x + 10, CP1.y);
+            context.fillText(`CP2 (${CP2.x.toFixed(1)}, ${CP2.y.toFixed(1)})`, CP2.x + 10, CP2.y);
+            
+            // 绘制第一条红色贝塞尔曲线
+            context.strokeStyle = "red";
+            context.lineWidth = 3;
+            context.beginPath();
+            context.moveTo(50, 290);  // 起点
+            context.bezierCurveTo(
+                70, 310,   // 第一个控制点
+                250, 290,  // 第二个控制点
+                290, 170   // 终点
+            );
+            context.stroke();
+            
+            // 绘制第二条红色贝塞尔曲线
+            context.strokeStyle = "red";
+            context.lineWidth = 3;
+            context.beginPath();
+            context.moveTo(650, 350);  // 起点
+            context.bezierCurveTo(
+                650, 170,  // 第一个控制点
+                690, 170,  // 第二个控制点
+                850, 230   // 终点
+            );
+            context.stroke();
+            
+            // 绘制蓝色贝塞尔曲线
+            context.strokeStyle = "blue";
+            context.lineWidth = 3;
+            context.beginPath();
+            context.moveTo(290, 170);  // 起点
+            context.bezierCurveTo(
+                330, 50,   // 第一个控制点
+                650, 530,  // 第二个控制点
+                650, 350   // 终点
+            );
+            context.stroke();
+            
+            // 绘制新的贝塞尔曲线：0,0 -> 200,0 -> 400,600 -> 400,800
+            context.strokeStyle = "purple";
+            context.lineWidth = 3;
+            context.beginPath();
+            context.moveTo(0, 0);  // 起点
+            context.bezierCurveTo(
+                200, 0,    // 第一个控制点
+                400, 600,  // 第二个控制点
+                400, 800   // 终点
+            );
+            context.stroke();
+            
+            // 计算并标记中点 (t=0.5)
+            // 贝塞尔曲线公式: B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
+            const t = 0.5;
+            const Q0 = {x: 0, y: 0};
+            const Q1 = {x: 200, y: 0};
+            const Q2 = {x: 400, y: 600};
+            const Q3 = {x: 400, y: 800};
+            
+            const midX = Math.pow(1-t, 3) * Q0.x + 
+                        3 * Math.pow(1-t, 2) * t * Q1.x + 
+                        3 * (1-t) * Math.pow(t, 2) * Q2.x + 
+                        Math.pow(t, 3) * Q3.x;
+            const midY = Math.pow(1-t, 3) * Q0.y + 
+                        3 * Math.pow(1-t, 2) * t * Q1.y + 
+                        3 * (1-t) * Math.pow(t, 2) * Q2.y + 
+                        Math.pow(t, 3) * Q3.y;
+            
+            // 绘制中点
+            context.fillStyle = "purple";
+            context.beginPath();
+            context.arc(midX, midY, 6, 0, 2 * Math.PI);
+            context.fill();
+            
+            // 标记中点坐标
+            context.fillStyle = "purple";
+            context.font = "14px Arial";
+            context.fillText(`中点: (${midX.toFixed(1)}, ${midY.toFixed(1)})`, midX + 10, midY - 10);
+        }
+        
+        // 页面加载完成后绘制
+        window.onload = function() {
+            drawCanvasWithAxes();
+            
+            // 显示绘制信息
+            const infoDiv = document.getElementById('drawingInfo');
+            infoDiv.innerHTML = `
+                <div class="coordinates">
+                    <strong>画布已准备就绪：</strong><br>
+                    • 坐标范围：0 到 800<br>
+                    • 原点：(0,0) 位于左上角<br>
+                    • 网格间隔：50像素<br>
+                    • 坐标标记：每100像素一个<br>
+                    • draw_random() 函数已准备，可以添加绘制代码
+                </div>
+            `;
+        };
+    </script>
+</body>
+</html>

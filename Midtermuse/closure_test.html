@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闭包测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .result {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .canvas-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JavaScript 闭包测试</h1>
+        
+        <div class="code-block">
+function make(a) {<br>
+&nbsp;&nbsp;let b = a;<br>
+&nbsp;&nbsp;return function(c) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;a = a + 1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return a - b + c;<br>
+&nbsp;&nbsp;};<br>
+}<br><br>
+let x = make(1);<br>
+let y = make(2);<br><br>
+console.log("first: ", x(2));   // ?<br>
+console.log("second:", x(3));  // ?<br>
+console.log("third: ", x(4));  // ?<br>
+console.log("fourth:", y(5));  // ?
+        </div>
+        
+        <div id="results"></div>
+        
+        <h3>分析过程：</h3>
+        <div id="analysis"></div>
+        
+        <h3>Canvas 变换测试：</h3>
+        <div class="canvas-container">
+            <canvas id="transformCanvas" width="300" height="200" style="border: 1px solid #333; background: white;"></canvas>
+        </div>
+        <div id="canvasAnalysis"></div>
+    </div>
+
+    <script>
+        function make(a) {
+            let b = a;
+            return function(c) {
+                a = a + 1;
+                return a - b + c;
+            };
+        }
+
+        let x = make(1);
+        let y = make(2);
+
+        // 执行并显示结果
+        function runTest() {
+            const resultsDiv = document.getElementById('results');
+            const analysisDiv = document.getElementById('analysis');
+            
+            resultsDiv.innerHTML = '<h3>执行结果：</h3>';
+            
+            // 重新创建函数来追踪状态
+            function makeWithTracking(a) {
+                let b = a;
+                let callCount = 0;
+                return function(c) {
+                    callCount++;
+                    const oldA = a;
+                    a = a + 1;
+                    const result = a - b + c;
+                    
+                    console.log(`x(${c}) - 调用次数: ${callCount}, a变化: ${oldA} → ${a}, b=${b}, 结果: ${result}`);
+                    return result;
+                };
+            }
+            
+            let x2 = makeWithTracking(1);
+            let y2 = makeWithTracking(2);
+            
+            // 执行测试
+            const first = x2(2);
+            const second = x2(3);
+            const third = x2(4);
+            const fourth = y2(5);
+            
+            resultsDiv.innerHTML += `
+                <div class="result">first: ${first}</div>
+                <div class="result">second: ${second}</div>
+                <div class="result">third: ${third}</div>
+                <div class="result">fourth: ${fourth}</div>
+            `;
+            
+            analysisDiv.innerHTML = `
+                <h4>详细分析：</h4>
+                <p><strong>x = make(1):</strong></p>
+                <ul>
+                    <li>创建时：a=1, b=1</li>
+                    <li>x(2): a变为2, 返回 2-1+2 = 3</li>
+                    <li>x(3): a变为3, 返回 3-1+3 = 5</li>
+                    <li>x(4): a变为4, 返回 4-1+4 = 7</li>
+                </ul>
+                <p><strong>y = make(2):</strong></p>
+                <ul>
+                    <li>创建时：a=2, b=2</li>
+                    <li>y(5): a变为3, 返回 3-2+5 = 6</li>
+                </ul>
+                <p><strong>关键点：</strong>每次调用都会修改a的值，但b保持不变！</p>
+            `;
+        }
+        
+        // 异步代码测试
+        function runAsyncTest() {
+            console.log("=== 异步代码测试 ===");
+            console.log("Start");
+            let a = 0;
+
+            function one() {
+                console.log("One, A is", a);
+                a = 1;
+            }
+
+            function two() {
+                console.log("Two, A is", a);
+                a = 2;
+                window.requestAnimationFrame(one);
+            }
+
+            function three() {
+                console.log("Three, A is", a);
+                window.requestAnimationFrame(two);
+                a = 3;
+            }
+
+            window.requestAnimationFrame(three);
+            a = 4;
+            console.log("End, A is", a);
+        }
+        
+        // Canvas 变换测试
+        function runCanvasTest() {
+            const canvas = document.getElementById('transformCanvas');
+            const ctx = canvas.getContext('2d');
+            const analysisDiv = document.getElementById('canvasAnalysis');
+            
+            // 清空画布
+            ctx.clearRect(0, 0, 300, 200);
+            
+            // 绘制坐标轴和网格
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            // 绘制网格
+            for (let x = 0; x <= 300; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, 200);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= 200; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(300, y);
+                ctx.stroke();
+            }
+            
+            // 绘制坐标轴
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 100);
+            ctx.lineTo(300, 100);
+            ctx.moveTo(150, 0);
+            ctx.lineTo(150, 200);
+            ctx.stroke();
+            
+            // 设置原点在中心
+            ctx.translate(150, 100);
+            
+            // 记录变换前的状态
+            const originalMatrix = ctx.getTransform();
+            
+            // 执行你的变换序列
+            ctx.save();
+            ctx.translate(10, 0);
+            ctx.scale(2, 2);
+            ctx.rotate(Math.PI / 2);   // 90 degrees
+            ctx.translate(10, 0);
+            ctx.moveTo(0, 0);
+            ctx.restore();
+            
+            ctx.rotate(Math.PI / 2);   // 90 degrees
+            ctx.lineTo(10, 0);
+            ctx.stroke();
+            
+            // 计算实际坐标
+            const finalMatrix = ctx.getTransform();
+            
+            // 计算线条的实际起点和终点
+            // 起点：(0,0) 在变换后的坐标
+            const startPoint = new DOMPoint(0, 0).matrixTransform(originalMatrix);
+            // 终点：(10,0) 在变换后的坐标
+            const endPoint = new DOMPoint(10, 0).matrixTransform(finalMatrix);
+            
+            // 绘制起点和终点标记
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(startPoint.x - 150, startPoint.y - 100, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(endPoint.x - 150, endPoint.y - 100, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 显示分析结果
+            analysisDiv.innerHTML = `
+                <div class="result">
+                    <strong>变换分析：</strong><br>
+                    起点坐标：(${startPoint.x.toFixed(1)}, ${startPoint.y.toFixed(1)})<br>
+                    终点坐标：(${endPoint.x.toFixed(1)}, ${endPoint.y.toFixed(1)})<br>
+                    <br>
+                    <strong>变换步骤：</strong><br>
+                    1. save() - 保存状态<br>
+                    2. translate(10, 0) - 向右平移10<br>
+                    3. scale(2, 2) - 放大2倍<br>
+                    4. rotate(π/2) - 旋转90度<br>
+                    5. translate(10, 0) - 再向右平移10<br>
+                    6. moveTo(0, 0) - 移动到原点<br>
+                    7. restore() - 恢复状态<br>
+                    8. rotate(π/2) - 再次旋转90度<br>
+                    9. lineTo(10, 0) - 画线到(10,0)<br>
+                    10. stroke() - 绘制<br>
+                </div>
+            `;
+        }
+        
+        // 页面加载完成后运行测试
+        window.onload = function() {
+            runTest();
+            runCanvasTest();
+            
+            // 延迟运行异步测试，避免与第一个测试冲突
+            setTimeout(() => {
+                runAsyncTest();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

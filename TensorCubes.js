@@ -1,21 +1,40 @@
 // Three.js cube stacking animation with neural network learning
 
+console.log("Script starting...");
+
 import * as THREE from "three";
 
-let renderer = new THREE.WebGLRenderer();
-renderer.setSize(400, 400);
+console.log("THREE module loaded:", typeof THREE);
+console.log("THREE.WebGLRenderer available:", typeof THREE.WebGLRenderer);
 
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera();
-camera.position.z = 10;
-camera.position.y = 5;
-camera.position.x = 5;
-camera.lookAt(0, 3, 0);
+let renderer, scene, camera;
 
-scene.add(new THREE.AmbientLight("white", 0.2));
+try {
+  console.log("Creating WebGL renderer...");
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(400, 400);
+  renderer.setClearColor(0x444444); // Lighter background
+  console.log("Renderer created successfully");
+
+  console.log("Creating scene...");
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+  camera.position.set(6, 6, 6);
+  camera.lookAt(0, 1, 0);
+  console.log("Scene and camera created successfully");
+} catch (error) {
+  console.error("Error creating Three.js components:", error);
+}
+
+scene.add(new THREE.AmbientLight("white", 0.4));
 let point = new THREE.PointLight("white", 1, 0, 0);
-point.position.set(20, 10, 15);
+point.position.set(10, 10, 10);
 scene.add(point);
+
+// Add directional light for better visibility
+let directionalLight = new THREE.DirectionalLight("white", 0.8);
+directionalLight.position.set(5, 10, 5);
+scene.add(directionalLight);
 
 // Ground plane
 let groundBox = new THREE.BoxGeometry(5, 0.1, 5);
@@ -26,7 +45,7 @@ new THREE.MeshLambertMaterial({ color: 0x888888 })
 groundMesh.position.y = -0.05;
 scene.add(groundMesh);
 
-// Create 5 cubes of different sizes
+// Create 3 cubes of different sizes
 let box1 = new THREE.Mesh(
     new THREE.BoxGeometry(1, 1, 1),
     new THREE.MeshStandardMaterial({ color: "red" })
@@ -40,23 +59,12 @@ let box3 = new THREE.Mesh(
     new THREE.BoxGeometry(1, 1, 1),
     new THREE.MeshStandardMaterial({ color: "blue" })
   );
-let box4 = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshStandardMaterial({ color: "cyan" })
-  );
-box4.scale.set(0.8, 0.8, 0.8);
-  let box5 = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5, 0.5, 0.5),
-    new THREE.MeshStandardMaterial({ color: "green" })
-  );
 
 // Cube height definitions for stacking calculations
 const heights = {
   box1: 1 * 2,    // Red cube height (scaled)
   box2: 1.5,      // Purple cube height
-  box3: 1,        // Blue cube height
-  box4: 1 * 0.8,  // Cyan cube height (scaled)
-  box5: 0.5       // Green cube height
+  box3: 1         // Blue cube height
 };
 
 // Stack cubes from bottom to top
@@ -64,63 +72,160 @@ let currentTop = 0;
 const stackOrder = [
   { mesh: box1, height: heights.box1 },
   { mesh: box2, height: heights.box2 },
-  { mesh: box3, height: heights.box3 },
-  { mesh: box4, height: heights.box4 },
-  { mesh: box5, height: heights.box5 }
+  { mesh: box3, height: heights.box3 }
 ];
 
 for (const item of stackOrder) {
   const centerY = currentTop + item.height / 2;
   item.mesh.position.set(0, centerY, 0);
   currentTop = centerY + item.height / 2;
+  console.log(`Positioned ${item.mesh.material.color.getStyle()} cube at y=${centerY}`);
 }
 
 // Add cubes to scene
 scene.add(box1);
 scene.add(box2);
 scene.add(box3);
-scene.add(box4);
-scene.add(box5);
+
+console.log("Scene setup complete:");
+console.log("- Red cube position:", box1.position);
+console.log("- Purple cube position:", box2.position);
+console.log("- Blue cube position:", box3.position);
+console.log("- Camera position:", camera.position);
+console.log("- Scene children count:", scene.children.length);
 
 document.getElementById("div1").appendChild(renderer.domElement);
+console.log("Renderer canvas added to DOM");
+console.log("Canvas size:", renderer.domElement.width, "x", renderer.domElement.height);
 
-// Create status display overlay
-const statusDiv = document.createElement('div');
-statusDiv.id = 'status';
-statusDiv.style.position = 'absolute';
-statusDiv.style.top = '10px';
-statusDiv.style.left = '10px';
-statusDiv.style.color = 'white';
-statusDiv.style.fontSize = '16px';
-statusDiv.style.fontFamily = 'Arial, sans-serif';
-statusDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
-statusDiv.style.padding = '10px';
-statusDiv.style.borderRadius = '5px';
-statusDiv.innerHTML = 'Phase 1: Direct Following';
-document.getElementById("div1").appendChild(statusDiv);
+// Status display is now in the HTML, just set initial content
+const statusDiv = document.getElementById('status');
+if (statusDiv) {
+    statusDiv.innerHTML = 'Phase 1: Direct Following';
+}
 
 // Animation control variables
 let time = 0;
 const radius = 1.5; // Circle radius for base cube movement
 const speed = 0.02; // Animation speed
 
-// Position and velocity tracking for all cubes
+// Position and velocity tracking for 3 cubes
 let previousPosition1 = { x: 0, y: 0, z: 0 };
 let previousPosition2 = { x: 0, y: 0, z: 0 };
 let previousPosition3 = { x: 0, y: 0, z: 0 };
-let previousPosition4 = { x: 0, y: 0, z: 0 };
-let previousPosition5 = { x: 0, y: 0, z: 0 };
 let velocity1 = { x: 0, y: 0, z: 0 };
 let velocity2 = { x: 0, y: 0, z: 0 };
 let velocity3 = { x: 0, y: 0, z: 0 };
-let velocity4 = { x: 0, y: 0, z: 0 };
-let velocity5 = { x: 0, y: 0, z: 0 };
 
-// Neural networks for each learning cube
+// Simple behavior function: move towards target with discrete actions
+function simpleBehaviorFunction(state) {
+    const [x, y, z, vx, vy, vz] = state;
+    
+    // Calculate relative position to target (should be 0,0,0 when perfectly aligned)
+    const dx = x; // already relative position
+    const dz = z; // already relative position
+    
+    // Initialize actions: [U, D, L, R, Forward, Back]
+    let actions = [0, 0, 0, 0, 0, 0];
+    
+    // Horizontal movement rules (L/R)
+    if (dx > 0.2) actions[2] = 1; // Move Left (reduce x)
+    else if (dx < -0.2) actions[3] = 1; // Move Right (increase x)
+    
+    // Forward/Back movement rules
+    if (dz > 0.2) actions[4] = 1; // Move Forward (reduce z)
+    else if (dz < -0.2) actions[5] = 1; // Move Back (increase z)
+    
+    // Vertical adjustment (minor)
+    if (y > 0.1) actions[1] = 0.3; // Move Down slightly
+    else if (y < -0.1) actions[0] = 0.3; // Move Up slightly
+    
+    return actions;
+}
+
+// Generate training dataset using the simple behavior function
+function generateTrainingData(numSamples = 1000) {
+    const trainingSet = [];
+    
+    for (let i = 0; i < numSamples; i++) {
+        // Random state: relative positions and velocities
+        const state = [
+            (Math.random() - 0.5) * 4, // x relative position
+            (Math.random() - 0.5) * 2, // y relative position  
+            (Math.random() - 0.5) * 4, // z relative position
+            (Math.random() - 0.5) * 1, // x velocity
+            (Math.random() - 0.5) * 1, // y velocity
+            (Math.random() - 0.5) * 1  // z velocity
+        ];
+        
+        // Apply simple behavior function to get actions
+        const actions = simpleBehaviorFunction(state);
+        
+        trainingSet.push({ input: state, output: actions });
+    }
+    
+    console.log(`Generated ${numSamples} training samples`);
+    return trainingSet;
+}
+
+// Convert discrete actions to position adjustments
+function actionsToMovement(actions) {
+    const speed = 0.1;
+    return {
+        x: (actions[3] - actions[2]) * speed, // Right - Left
+        y: (actions[0] - actions[1]) * speed, // Up - Down  
+        z: (actions[5] - actions[4]) * speed  // Back - Forward
+    };
+}
+
+// Pre-train all neural networks with generated data
+async function preTrainNetworks() {
+    if (networksPreTrained) return;
+    
+    console.log("Starting pre-training of all neural networks...");
+    
+    // Generate training data once
+    if (!preTrainingData) {
+        preTrainingData = generateTrainingData(2000);
+    }
+    
+    const inputs = preTrainingData.map(sample => sample.input);
+    const outputs = preTrainingData.map(sample => sample.output);
+    
+    const xs = tf.tensor2d(inputs);
+    const ys = tf.tensor2d(outputs);
+    
+    try {
+        // Pre-train all networks
+        const networks = [qNetwork2, qNetwork3];
+        const networkNames = ['Purple', 'Blue'];
+        
+        for (let i = 0; i < networks.length; i++) {
+            if (networks[i]) {
+                console.log(`Pre-training ${networkNames[i]} cube network...`);
+                await networks[i].fit(xs, ys, { 
+                    epochs: 20, 
+                    batchSize: 32,
+                    verbose: 0
+                });
+                console.log(`${networkNames[i]} cube pre-training completed!`);
+            }
+        }
+        
+        networksPreTrained = true;
+        console.log("All networks pre-trained successfully!");
+        
+    } catch (error) {
+        console.error("Pre-training error:", error);
+    } finally {
+        xs.dispose();
+        ys.dispose();
+    }
+}
+
+// Neural networks for learning cubes
 let qNetwork2 = null; // Purple cube neural network
 let qNetwork3 = null; // Blue cube neural network
-let qNetwork4 = null; // Cyan cube neural network
-let qNetwork5 = null; // Green cube neural network
 
 // Initialize neural networks when TensorFlow is available
 function initializeModel() {
@@ -131,7 +236,7 @@ function initializeModel() {
         layers: [
           tf.layers.dense({ inputShape: [6], units: 16, activation: 'relu' }),
           tf.layers.dense({ units: 8, activation: 'relu' }),
-          tf.layers.dense({ units: 3, activation: 'tanh' })
+          tf.layers.dense({ units: 6, activation: 'sigmoid' }) // 6 outputs: U,D,L,R,Forward,Back
         ]
       });
       qNetwork2.compile({
@@ -147,7 +252,7 @@ function initializeModel() {
         layers: [
           tf.layers.dense({ inputShape: [6], units: 16, activation: 'relu' }),
           tf.layers.dense({ units: 8, activation: 'relu' }),
-          tf.layers.dense({ units: 3, activation: 'tanh' })
+          tf.layers.dense({ units: 6, activation: 'sigmoid' }) // 6 outputs: U,D,L,R,Forward,Back
         ]
       });
       qNetwork3.compile({
@@ -155,38 +260,6 @@ function initializeModel() {
         loss: 'meanSquaredError'
       });
       console.log("Blue cube network initialized!");
-    }
-    
-    // Create neural network for cyan cube
-    if (!qNetwork4) {
-      qNetwork4 = tf.sequential({
-        layers: [
-          tf.layers.dense({ inputShape: [6], units: 16, activation: 'relu' }),
-          tf.layers.dense({ units: 8, activation: 'relu' }),
-          tf.layers.dense({ units: 3, activation: 'tanh' })
-        ]
-      });
-      qNetwork4.compile({
-        optimizer: tf.train.adam(0.01),
-        loss: 'meanSquaredError'
-      });
-      console.log("Cyan cube network initialized!");
-    }
-    
-    // Create neural network for green cube
-    if (!qNetwork5) {
-      qNetwork5 = tf.sequential({
-        layers: [
-          tf.layers.dense({ inputShape: [6], units: 16, activation: 'relu' }),
-          tf.layers.dense({ units: 8, activation: 'relu' }),
-          tf.layers.dense({ units: 3, activation: 'tanh' })
-        ]
-      });
-      qNetwork5.compile({
-        optimizer: tf.train.adam(0.01),
-        loss: 'meanSquaredError'
-      });
-      console.log("Green cube network initialized!");
     }
   }
 }
@@ -196,17 +269,15 @@ let followingMode = true;
 let globalLearningPhase = 0; // 0 = direct following, 1 = neural network learning
 let correctionData2 = []; // Purple cube training data
 let correctionData3 = []; // Blue cube training data
-let correctionData4 = []; // Cyan cube training data
-let correctionData5 = []; // Green cube training data
 let frameCount = 0;
 let isTraining2 = false; // Purple cube training status
 let isTraining3 = false; // Blue cube training status
-let isTraining4 = false; // Cyan cube training status
-let isTraining5 = false; // Green cube training status
 let trainingCount2 = 0; // Purple cube training sessions
 let trainingCount3 = 0; // Blue cube training sessions
-let trainingCount4 = 0; // Cyan cube training sessions
-let trainingCount5 = 0; // Green cube training sessions
+
+// Pre-training variables
+let networksPreTrained = false;
+let preTrainingData = null;
 
 // Main animation loop
 function animate() {
@@ -216,8 +287,6 @@ function animate() {
   previousPosition1 = { x: box1.position.x, y: box1.position.y, z: box1.position.z };
   previousPosition2 = { x: box2.position.x, y: box2.position.y, z: box2.position.z };
   previousPosition3 = { x: box3.position.x, y: box3.position.y, z: box3.position.z };
-  previousPosition4 = { x: box4.position.x, y: box4.position.y, z: box4.position.z };
-  previousPosition5 = { x: box5.position.x, y: box5.position.y, z: box5.position.z };
   
   // Calculate circular movement for red cube
   const x = Math.cos(time) * radius;
@@ -236,6 +305,11 @@ function animate() {
     initializeModel();
     frameCount++;
     
+    // Pre-train networks once after initialization
+    if (!networksPreTrained && qNetwork2 && qNetwork3) {
+        preTrainNetworks();
+    }
+    
     // Switch to learning mode after 600 frames (10 seconds)
     if (globalLearningPhase === 0 && frameCount >= 600) {
       globalLearningPhase = 1;
@@ -250,14 +324,6 @@ function animate() {
     if (qNetwork3) {
       handleCubeLearning(box3, box2, heights.box3, heights.box2, qNetwork3, 
                         correctionData3, isTraining3, trainingCount3, velocity2, 'Blue', 3);
-    }
-    if (qNetwork4) {
-      handleCubeLearning(box4, box3, heights.box4, heights.box3, qNetwork4, 
-                        correctionData4, isTraining4, trainingCount4, velocity3, 'Cyan', 4);
-    }
-    if (qNetwork5) {
-      handleCubeLearning(box5, box4, heights.box5, heights.box4, qNetwork5, 
-                        correctionData5, isTraining5, trainingCount5, velocity4, 'Green', 5);
     }
     
     // Update status display
@@ -275,16 +341,13 @@ function animate() {
   velocity3.y = box3.position.y - previousPosition3.y;
   velocity3.z = box3.position.z - previousPosition3.z;
   
-  velocity4.x = box4.position.x - previousPosition4.x;
-  velocity4.y = box4.position.y - previousPosition4.y;
-  velocity4.z = box4.position.z - previousPosition4.z;
-  
-  velocity5.x = box5.position.x - previousPosition5.x;
-  velocity5.y = box5.position.y - previousPosition5.y;
-  velocity5.z = box5.position.z - previousPosition5.z;
-  
   // Render the scene
   renderer.render(scene, camera);
+  
+  // Log every 60 frames to confirm animation is running
+  if (frameCount % 60 === 0) {
+    console.log(`Frame ${frameCount}, Red cube at:`, box1.position);
+  }
   
   // Continue the animation
   requestAnimationFrame(animate);
@@ -322,12 +385,15 @@ function handleCubeLearning(learnerCube, targetCube, learnerHeight, targetHeight
         Math.cos(time)
       ]]);
       
-      const corrections = network.predict(state);
-      const correctionArray = corrections.dataSync();
+      const actionPredictions = network.predict(state);
+      const actions = actionPredictions.dataSync();
       
-      learnerCube.position.x += correctionArray[0] * 0.15;
-      learnerCube.position.y += correctionArray[1] * 0.15;
-      learnerCube.position.z += correctionArray[2] * 0.15;
+      // Convert actions to movement
+      const movement = actionsToMovement(actions);
+      
+      learnerCube.position.x += movement.x;
+      learnerCube.position.y += movement.y;
+      learnerCube.position.z += movement.z;
       
       const horizontalError = Math.sqrt(
         Math.pow(learnerCube.position.x - targetCube.position.x, 2) + 
@@ -338,8 +404,10 @@ function handleCubeLearning(learnerCube, targetCube, learnerHeight, targetHeight
       );
       const reward = -(horizontalError + verticalError);
       
-      // Store training data in the appropriate array
-      correctionData.push({ state: state.dataSync(), corrections: correctionArray, reward });
+      // Store training data using the simple behavior function
+      const currentState = state.dataSync();
+      const idealActions = simpleBehaviorFunction(currentState);
+      correctionData.push({ state: currentState, actions: actions, idealActions: idealActions });
       
       // Train occasionally
       if (correctionData.length > 50 && !isTraining) {
@@ -347,7 +415,7 @@ function handleCubeLearning(learnerCube, targetCube, learnerHeight, targetHeight
       }
       
       state.dispose();
-      corrections.dispose();
+      actionPredictions.dispose();
     }
   } catch (error) {
     console.log(`${cubeName} cube error:`, error);
@@ -368,13 +436,11 @@ function updateStatusDisplay() {
   } else {
     // All cubes in learning phase
     statusText += `Purple: Learning | Data: ${correctionData2.length}/50 | Trained: ${trainingCount2}<br>`;
-    statusText += `Blue: Learning | Data: ${correctionData3.length}/50 | Trained: ${trainingCount3}<br>`;
-    statusText += `Cyan: Learning | Data: ${correctionData4.length}/50 | Trained: ${trainingCount4}<br>`;
-    statusText += `Green: Learning | Data: ${correctionData5.length}/50 | Trained: ${trainingCount5}`;
+    statusText += `Blue: Learning | Data: ${correctionData3.length}/50 | Trained: ${trainingCount3}`;
   }
   
   statusDiv.innerHTML = statusText;
-  statusDiv.style.backgroundColor = globalLearningPhase > 0 ? 'rgba(255,165,0,0.8)' : 'rgba(0,0,0,0.7)';
+  // Remove the background color override to let CSS handle it
 }
 
 // Train specific cube network
@@ -387,41 +453,22 @@ async function trainCubeNetwork(cubeIndex) {
   } else if (cubeIndex === 3) {
     data = correctionData3; isTraining = isTraining3; network = qNetwork3; trainingCount = trainingCount3;
     if (isTraining3) return; isTraining3 = true;
-  } else if (cubeIndex === 4) {
-    data = correctionData4; isTraining = isTraining4; network = qNetwork4; trainingCount = trainingCount4;
-    if (isTraining4) return; isTraining4 = true;
-  } else if (cubeIndex === 5) {
-    data = correctionData5; isTraining = isTraining5; network = qNetwork5; trainingCount = trainingCount5;
-    if (isTraining5) return; isTraining5 = true;
   }
   
   if (!data || data.length < 10) {
     // Reset training flag and return
     if (cubeIndex === 2) isTraining2 = false;
     else if (cubeIndex === 3) isTraining3 = false;
-    else if (cubeIndex === 4) isTraining4 = false;
-    else if (cubeIndex === 5) isTraining5 = false;
     return;
   }
   
   try {
     const recentData = data.slice(-10);
     const states = recentData.map(d => d.state);
-    const idealCorrections = recentData.map(d => {
-      const horizontalErrorX = d.state[0];
-      const horizontalErrorZ = d.state[1];
-      const targetVelX = d.state[2];
-      const targetVelZ = d.state[3];
-      
-      return [
-        -horizontalErrorX * 0.5 + targetVelX * 2,
-        0,
-        -horizontalErrorZ * 0.5 + targetVelZ * 2
-      ];
-    });
+    const idealActions = recentData.map(d => d.idealActions);
     
     const stateTensor = tf.tensor2d(states);
-    const targetTensor = tf.tensor2d(idealCorrections);
+    const targetTensor = tf.tensor2d(idealActions);
     
     await network.fit(stateTensor, targetTensor, { epochs: 1, verbose: 0 });
     
@@ -435,24 +482,15 @@ async function trainCubeNetwork(cubeIndex) {
     } else if (cubeIndex === 3) {
       correctionData3 = correctionData3.slice(-30);
       trainingCount3++;
-    } else if (cubeIndex === 4) {
-      correctionData4 = correctionData4.slice(-30);
-      trainingCount4++;
-    } else if (cubeIndex === 5) {
-      correctionData5 = correctionData5.slice(-30);
-      trainingCount5++;
     }
     
-    const currentCount = cubeIndex === 2 ? trainingCount2 : cubeIndex === 3 ? trainingCount3 : 
-                        cubeIndex === 4 ? trainingCount4 : trainingCount5;
+    const currentCount = cubeIndex === 2 ? trainingCount2 : trainingCount3;
     console.log(`Cube ${cubeIndex} trained (session ${currentCount})`);
   } catch (error) {
     console.log(`Cube ${cubeIndex} training error:`, error);
   } finally {
     if (cubeIndex === 2) isTraining2 = false;
     else if (cubeIndex === 3) isTraining3 = false;
-    else if (cubeIndex === 4) isTraining4 = false;
-    else if (cubeIndex === 5) isTraining5 = false;
   }
 }
 

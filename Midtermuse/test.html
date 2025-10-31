@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas 变换测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .canvas-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px solid #333;
+            background: white;
+        }
+        .info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Canvas 变换分析</h1>
+    
+    <div class="container">
+        <div class="canvas-container">
+            <h2>原始坐标轴</h2>
+            <canvas id="originalCanvas" width="400" height="300"></canvas>
+        </div>
+        
+        <div class="canvas-container">
+            <h2>变换后的线</h2>
+            <canvas id="transformedCanvas" width="400" height="300"></canvas>
+        </div>
+        
+        <div class="info">
+            <h2>变换步骤分析</h2>
+            <div class="step">
+                <strong>1. beginPath()</strong><br>
+                开始新的路径
+            </div>
+            <div class="step">
+                <strong>2. save()</strong><br>
+                保存当前状态
+            </div>
+            <div class="step">
+                <strong>3. scale(2,2)</strong><br>
+                X和Y轴都放大2倍
+            </div>
+            <div class="step">
+                <strong>4. translate(0,5)</strong><br>
+                向下平移5个单位
+            </div>
+            <div class="step">
+                <strong>5. rotate(π/2)</strong><br>
+                顺时针旋转90度
+            </div>
+            <div class="step">
+                <strong>6. translate(0,10)</strong><br>
+                向下平移10个单位
+            </div>
+            <div class="step">
+                <strong>7. scale(2,2)</strong><br>
+                再次放大2倍（总共4倍）
+            </div>
+            <div class="step">
+                <strong>8. rotate(π/2)</strong><br>
+                再次旋转90度（总共180度）
+            </div>
+            <div class="step">
+                <strong>9. moveTo(-10,0)</strong><br>
+                移动到起点(-10,0)
+            </div>
+            <div class="step">
+                <strong>10. restore()</strong><br>
+                恢复到保存的状态
+            </div>
+            <div class="step">
+                <strong>11-14. 更多变换</strong><br>
+                旋转-90度，缩放(-2,-2)，再旋转-90度
+            </div>
+            <div class="step">
+                <strong>15. lineTo(5,10)</strong><br>
+                画线到终点(5,10)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 绘制原始坐标轴
+        function drawOriginalAxes() {
+            const canvas = document.getElementById('originalCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 设置坐标原点在画布中心
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            ctx.translate(centerX, centerY);
+            
+            // 绘制坐标轴
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            
+            // X轴
+            ctx.beginPath();
+            ctx.moveTo(-centerX, 0);
+            ctx.lineTo(centerX, 0);
+            ctx.stroke();
+            
+            // Y轴
+            ctx.beginPath();
+            ctx.moveTo(0, -centerY);
+            ctx.lineTo(0, centerY);
+            ctx.stroke();
+            
+            // 绘制网格
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            // 垂直网格线
+            for (let x = -centerX; x <= centerX; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, -centerY);
+                ctx.lineTo(x, centerY);
+                ctx.stroke();
+            }
+            
+            // 水平网格线
+            for (let y = -centerY; y <= centerY; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(-centerX, y);
+                ctx.lineTo(centerX, y);
+                ctx.stroke();
+            }
+            
+            // 绘制原始线条（未变换）
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-10, 0);
+            ctx.lineTo(5, 10);
+            ctx.stroke();
+            
+            // 添加标签
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('原始线条: (-10,0) → (5,10)', -80, -centerY + 20);
+        }
+        
+        // 绘制变换后的线条
+        function drawTransformedLine() {
+            const canvas = document.getElementById('transformedCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 设置坐标原点在画布中心
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            ctx.translate(centerX, centerY);
+            
+            // 绘制坐标轴
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            
+            // X轴
+            ctx.beginPath();
+            ctx.moveTo(-centerX, 0);
+            ctx.lineTo(centerX, 0);
+            ctx.stroke();
+            
+            // Y轴
+            ctx.beginPath();
+            ctx.moveTo(0, -centerY);
+            ctx.lineTo(0, centerY);
+            ctx.stroke();
+            
+            // 绘制网格
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            // 垂直网格线
+            for (let x = -centerX; x <= centerX; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, -centerY);
+                ctx.lineTo(x, centerY);
+                ctx.stroke();
+            }
+            
+            // 水平网格线
+            for (let y = -centerY; y <= centerY; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(-centerX, y);
+                ctx.lineTo(centerX, y);
+                ctx.stroke();
+            }
+            
+            // 应用你的变换序列
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            ctx.save();
+            ctx.scale(2, 2);
+            ctx.translate(0, 5);
+            ctx.rotate(Math.PI/2);   // 90 degrees
+            ctx.translate(0, 10);
+            ctx.scale(2, 2);
+            ctx.rotate(Math.PI/2);   // 90 degrees
+            ctx.moveTo(-10, 0);
+            ctx.restore();
+            ctx.rotate(-Math.PI/2);  // -90 degrees
+            ctx.scale(-2, -2);
+            ctx.rotate(-Math.PI/2);  // -90 degrees
+            ctx.lineTo(5, 10);
+            ctx.stroke();
+            
+            // 添加标签
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('变换后的线条', -60, -centerY + 20);
+        }
+        
+        // 页面加载完成后绘制
+        window.onload = function() {
+            drawOriginalAxes();
+            drawTransformedLine();
+        };
+    </script>
+</body>
+</html>

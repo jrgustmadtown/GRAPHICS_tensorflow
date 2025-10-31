@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas 100x100 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .canvas-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #333;
+            background: white;
+            display: block;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Canvas 200×200 测试页面</h1>
+    
+    <div class="canvas-container">
+        <canvas id="testCanvas" width="200" height="200"></canvas>
+    </div>
+    
+    <div class="info">
+        <h3>画布信息</h3>
+        <p><strong>尺寸：</strong> 200 × 200 像素</p>
+        <p><strong>坐标原点：</strong> 左上角 (0,0)</p>
+        <p><strong>右下角：</strong> (200,200)</p>
+    </div>
+
+    <script>
+        // 获取画布和上下文
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 绘制一些测试内容
+        function drawTestContent() {
+            // 清空画布
+            ctx.clearRect(0, 0, 200, 200);
+            
+            // 从 testm.js 导入的绘制代码
+            ctx.strokeStyle = "black";
+            ctx.save();
+
+            ctx.beginPath();
+            ctx.moveTo(20, 20);
+            ctx.strokeStyle = "red";
+            ctx.lineTo(100, 20);
+            ctx.strokeStyle = "green";
+            ctx.stroke();
+
+            ctx.lineTo(60, 80);
+            ctx.strokeStyle = "blue";
+            ctx.stroke();
+
+            ctx.restore();
+
+            ctx.beginPath();
+            ctx.moveTo(60, 80);
+            ctx.lineTo(20, 20);
+            console.log("Before stroke, color is:", ctx.strokeStyle); // 调试信息
+            ctx.stroke();
+            ctx.strokeStyle = "purple";
+            console.log("After setting purple:", ctx.strokeStyle); // 调试信息
+        }
+        
+        // 页面加载完成后绘制
+        window.onload = function() {
+            drawTestContent();
+        };
+    </script>
+</body>
+</html>
