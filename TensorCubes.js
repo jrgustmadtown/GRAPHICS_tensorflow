@@ -123,22 +123,23 @@ function simpleBehaviorFunction(state) {
     
     // Calculate relative position to target (should be 0,0,0 when perfectly aligned)
     const dx = x; // already relative position
+    const dy = y; // relative Y position
     const dz = z; // already relative position
     
     // Initialize actions: [U, D, L, R, Forward, Back]
     let actions = [0, 0, 0, 0, 0, 0];
     
     // Horizontal movement rules (L/R)
-    if (dx > 0.2) actions[2] = 1; // Move Left (reduce x)
-    else if (dx < -0.2) actions[3] = 1; // Move Right (increase x)
+    if (dx > 0.1) actions[2] = 1; // Move Left (reduce x)
+    else if (dx < -0.1) actions[3] = 1; // Move Right (increase x)
     
     // Forward/Back movement rules
-    if (dz > 0.2) actions[4] = 1; // Move Forward (reduce z)
-    else if (dz < -0.2) actions[5] = 1; // Move Back (increase z)
+    if (dz > 0.1) actions[4] = 1; // Move Forward (reduce z)
+    else if (dz < -0.1) actions[5] = 1; // Move Back (increase z)
     
-    // Vertical adjustment (minor)
-    if (y > 0.1) actions[1] = 0.3; // Move Down slightly
-    else if (y < -0.1) actions[0] = 0.3; // Move Up slightly
+    // Vertical movement rules (more responsive)
+    if (dy > 0.1) actions[1] = 1; // Move Down (reduce y)
+    else if (dy < -0.1) actions[0] = 1; // Move Up (increase y)
     
     return actions;
 }
@@ -314,6 +315,11 @@ function animate() {
     if (globalLearningPhase === 0 && frameCount >= 600) {
       globalLearningPhase = 1;
       console.log("All cubes switching to learning mode...");
+      
+      // Move learning cubes to corner positions for learning challenge
+      box2.position.set(-3, 2, -3); // Purple cube to back-left corner
+      box3.position.set(3, 3, 3);   // Blue cube to front-right corner
+      console.log("Moved cubes to corner positions for learning challenge!");
     }
     
     // Handle cube learning for each cube
@@ -372,17 +378,17 @@ function handleCubeLearning(learnerCube, targetCube, learnerHeight, targetHeight
       learnerCube.position.y += (targetY - learnerCube.position.y) * 0.2;
     } else {
       // Phase 2: Neural network learning for all cubes
-      learnerCube.position.x += (targetX - learnerCube.position.x) * 0.02;
-      learnerCube.position.z += (targetZ - learnerCube.position.z) * 0.02;
-      learnerCube.position.y += (targetY - learnerCube.position.y) * 0.02;
+      learnerCube.position.x += (targetX - learnerCube.position.x) * 0.01;
+      learnerCube.position.z += (targetZ - learnerCube.position.z) * 0.01;
+      learnerCube.position.y += (targetY - learnerCube.position.y) * 0.01;
       
       const state = tf.tensor2d([[
         learnerCube.position.x - targetCube.position.x,
+        learnerCube.position.y - targetY,
         learnerCube.position.z - targetCube.position.z,
         targetVelocity.x,
-        targetVelocity.z,
-        Math.sin(time),
-        Math.cos(time)
+        targetVelocity.y,
+        targetVelocity.z
       ]]);
       
       const actionPredictions = network.predict(state);
